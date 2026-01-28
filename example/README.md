@@ -47,25 +47,25 @@ export GOOGLE_CLIENT_SECRET=your_client_secret
 
 ## Files
 
-| File | Description |
-|------|-------------|
-| `index.html` | Main demo page with OAuth buttons |
-| `callback-local.html` | OAuth callback handler page |
-| `server.js` | Node.js demo server with API endpoints |
+| File                  | Description                            |
+| --------------------- | -------------------------------------- |
+| `index.html`          | Main demo page with OAuth buttons      |
+| `callback-local.html` | OAuth callback handler page            |
+| `server.js`           | Node.js demo server with API endpoints |
 
 ## API Endpoints
 
 The demo server provides the following API endpoints:
 
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/api/config` | GET | Get OAuth configuration status |
-| `/api/github/token` | POST | Exchange GitHub code for access token |
-| `/api/github/user` | GET | Get GitHub user info |
-| `/api/feishu/token` | POST | Exchange Feishu code for access token |
-| `/api/feishu/user` | GET | Get Feishu user info |
-| `/api/google/token` | POST | Exchange Google code for access token |
-| `/api/google/user` | GET | Get Google user info |
+| Endpoint            | Method | Description                           |
+| ------------------- | ------ | ------------------------------------- |
+| `/api/config`       | GET    | Get OAuth configuration status        |
+| `/api/github/token` | POST   | Exchange GitHub code for access token |
+| `/api/github/user`  | GET    | Get GitHub user info                  |
+| `/api/feishu/token` | POST   | Exchange Feishu code for access token |
+| `/api/feishu/user`  | GET    | Get Feishu user info                  |
+| `/api/google/token` | POST   | Exchange Google code for access token |
+| `/api/google/user`  | GET    | Get Google user info                  |
 
 ## Notes
 

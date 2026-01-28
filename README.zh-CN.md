@@ -119,25 +119,25 @@ async function login() {
 <!-- callback.html -->
 <!DOCTYPE html>
 <html>
-<head>
-  <title>授权回调</title>
-</head>
-<body>
-  <p>正在处理授权...</p>
-  <script type="module">
-    import { handleCallback } from 'auth-popup';
+  <head>
+    <title>授权回调</title>
+  </head>
+  <body>
+    <p>正在处理授权...</p>
+    <script type="module">
+      import { handleCallback } from 'auth-popup';
 
-    const result = handleCallback({
-      allowedOrigins: ['https://yourapp.com'],
-      autoClose: true,
-      autoCloseDelay: 100,
-    });
+      const result = handleCallback({
+        allowedOrigins: ['https://yourapp.com'],
+        autoClose: true,
+        autoCloseDelay: 100,
+      });
 
-    if (!result.success) {
-      document.body.innerHTML = `<p>错误: ${result.data.error_description || result.data.error}</p>`;
-    }
-  </script>
-</body>
+      if (!result.success) {
+        document.body.innerHTML = `<p>错误: ${result.data.error_description || result.data.error}</p>`;
+      }
+    </script>
+  </body>
 </html>
 ```
 
@@ -149,23 +149,23 @@ async function login() {
 
 #### 选项
 
-| 选项 | 类型 | 默认值 | 描述 |
-|------|------|--------|------|
-| `authUrl` | `string` | *必填* | 授权 URL |
-| `width` | `number` | `500` | 弹窗宽度（像素） |
-| `height` | `number` | `600` | 弹窗高度（像素） |
-| `timeout` | `number` | `120000` | 超时时间（毫秒，默认 2 分钟） |
-| `redirectFallback` | `boolean` | `true` | 弹窗被拦截时是否回退到重定向 |
-| `allowedOrigins` | `string[]` | `[location.origin]` | postMessage 允许的来源 |
-| `forceClosePopup` | `boolean` | `false` | 完成时强制关闭弹窗 |
+| 选项               | 类型       | 默认值              | 描述                          |
+| ------------------ | ---------- | ------------------- | ----------------------------- |
+| `authUrl`          | `string`   | _必填_              | 授权 URL                      |
+| `width`            | `number`   | `500`               | 弹窗宽度（像素）              |
+| `height`           | `number`   | `600`               | 弹窗高度（像素）              |
+| `timeout`          | `number`   | `120000`            | 超时时间（毫秒，默认 2 分钟） |
+| `redirectFallback` | `boolean`  | `true`              | 弹窗被拦截时是否回退到重定向  |
+| `allowedOrigins`   | `string[]` | `[location.origin]` | postMessage 允许的来源        |
+| `forceClosePopup`  | `boolean`  | `false`             | 完成时强制关闭弹窗            |
 
 #### 返回值
 
 ```typescript
 Promise<{
-  code: string;      // 授权码
-  state?: string;    // 状态参数（如果提供）
-}>
+  code: string; // 授权码
+  state?: string; // 状态参数（如果提供）
+}>;
 ```
 
 ### handleCallback(options) / CallbackHandler.init(options)
@@ -174,11 +174,11 @@ Promise<{
 
 #### 选项
 
-| 选项 | 类型 | 默认值 | 描述 |
-|------|------|--------|------|
-| `allowedOrigins` | `string[]` | *必填* | 允许的父窗口来源 |
-| `autoClose` | `boolean` | `true` | 处理完成后自动关闭弹窗 |
-| `autoCloseDelay` | `number` | `100` | 自动关闭延迟（毫秒） |
+| 选项             | 类型       | 默认值 | 描述                   |
+| ---------------- | ---------- | ------ | ---------------------- |
+| `allowedOrigins` | `string[]` | _必填_ | 允许的父窗口来源       |
+| `autoClose`      | `boolean`  | `true` | 处理完成后自动关闭弹窗 |
+| `autoCloseDelay` | `number`   | `100`  | 自动关闭延迟（毫秒）   |
 
 #### 返回值
 
@@ -218,7 +218,7 @@ const state = generateState(); // 32 位随机字符串
 
 ```typescript
 validateOrigin('https://example.com', ['https://example.com']); // true
-validateOrigin('https://evil.com', ['https://example.com']);    // false
+validateOrigin('https://evil.com', ['https://example.com']); // false
 ```
 
 ### 浏览器工具
