@@ -1,11 +1,15 @@
-/**
- * Auth Popup Library
- */
+export { AuthPopup } from './auth-popup';
+export { CallbackHandler, handleCallback } from './callback-handler';
 
-export function greet(name: string): string {
-  return `Hello, ${name}!`;
-}
+export { generatePKCE, generateState, validateOrigin } from './utils/security';
+export { detectBrowser, isPopupBlocked } from './utils/browser';
 
-export default {
-  greet,
-};
+export type {
+  AuthPopupOptions,
+  AuthResult,
+  AuthError,
+  CallbackOptions,
+  CallbackMessage,
+  BrowserInfo,
+  PKCEChallenge,
+} from './types';
