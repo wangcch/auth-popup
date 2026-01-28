@@ -7,9 +7,11 @@ export default defineConfig({
     dts({
       include: ['src'],
       outDir: 'dist',
+      rollupTypes: true,
     }),
   ],
   build: {
+    sourcemap: false,
     lib: {
       entry: resolve(__dirname, 'src/index.ts'),
       name: 'AuthPopup',
