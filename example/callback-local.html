@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Authorization</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      background: #f5f5f5;
+      color: #24292f;
+    }
+
+    .container {
+      text-align: center;
+      padding: 48px;
+      background: #ffffff;
+      border-radius: 12px;
+      max-width: 420px;
+      width: 90%;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    }
+
+    .icon-circle {
+      width: 80px;
+      height: 80px;
+      margin: 0 auto 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .icon-svg {
+      width: 80px;
+      height: 80px;
+    }
+
+    .spinner {
+      width: 40px;
+      height: 40px;
+      border: 3px solid rgba(9, 105, 218, 0.2);
+      border-top: 3px solid #0969da;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      0% {
+        transform: rotate(0deg);
+      }
+
+      100% {
+        transform: rotate(360deg);
+      }
+    }
+
+    h1 {
+      font-size: 24px;
+      font-weight: 600;
+      margin-bottom: 12px;
+      color: #24292f;
+    }
+
+    .message {
+      font-size: 15px;
+      color: #656d76;
+      line-height: 1.6;
+      margin-bottom: 8px;
+    }
+
+    .countdown {
+      font-size: 13px;
+      color: #8c959f;
+      margin-top: 16px;
+    }
+
+    .error-detail {
+      font-size: 13px;
+      color: #8c959f;
+      margin-top: 12px;
+      padding: 12px;
+      background: #f6f8fa;
+      border-radius: 6px;
+      word-break: break-word;
+    }
+
+    /* Dark mode */
+    @media (prefers-color-scheme: dark) {
+      body {
+        background: #0d1117;
+        color: #c9d1d9;
+      }
+
+      .container {
+        background: #161b22;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+      }
+
+      h1 {
+        color: #c9d1d9;
+      }
+
+      .message {
+        color: #8b949e;
+      }
+
+      .countdown {
+        color: #6e7681;
+      }
+
+      .error-detail {
+        color: #8b949e;
+        background: #21262d;
+      }
+
+      .spinner {
+        border: 3px solid rgba(88, 166, 255, 0.2);
+        border-top: 3px solid #58a6ff;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <div class="icon-circle" id="iconCircle">
+      <div class="spinner" id="spinner"></div>
+      <svg class="icon-svg" id="iconSvg" style="display: none;" viewBox="0 0 80 80" fill="none"
+        xmlns="http://www.w3.org/2000/svg">
+        <!-- Success icon -->
+        <g id="successIcon" style="display: none;">
+          <circle cx="40" cy="40" r="38" fill="#4CAF50" opacity="0.15" />
+          <circle cx="40" cy="40" r="30" fill="#4CAF50" />
+          <path d="M28 40L36 48L52 32" stroke="white" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" />
+        </g>
+        <!-- Error icon -->
+        <g id="errorIcon" style="display: none;">
+          <circle cx="40" cy="40" r="38" fill="#E74C3C" opacity="0.15" />
+          <circle cx="40" cy="40" r="30" fill="#E74C3C" />
+          <path d="M30 30L50 50M50 30L30 50" stroke="white" stroke-width="4" stroke-linecap="round" />
+        </g>
+      </svg>
+    </div>
+
+    <h1 id="title">Authorizing</h1>
+    <div class="message" id="message">Please wait while we complete the authorization...</div>
+    <div class="countdown" id="countdown"></div>
+  </div>
+
+  <script src="../dist/auth-popup.umd.cjs"></script>
+  <script>
+    const iconCircle = document.getElementById('iconCircle');
+    const spinner = document.getElementById('spinner');
+    const iconSvg = document.getElementById('iconSvg');
+    const successIcon = document.getElementById('successIcon');
+    const errorIcon = document.getElementById('errorIcon');
+    const title = document.getElementById('title');
+    const message = document.getElementById('message');
+    const countdown = document.getElementById('countdown');
+
+    // 显示倒计时
+    function showCountdown(seconds) {
+      let remaining = seconds;
+      const updateCountdown = () => {
+        countdown.textContent = `Closing in ${remaining}s...`;
+        remaining--;
+        if (remaining >= 0) {
+          setTimeout(updateCountdown, 1000);
+        }
+      };
+      updateCountdown();
+    }
+
+    try {
+      // 检测是否为 redirect 模式（无 opener）
+      const isRedirectMode = !window.opener || window.opener.closed;
+      
+      const result = AuthPopup.handleCallback({
+        allowedOrigins: ['*'],
+        autoClose: true,
+        autoCloseDelay: 2000,  // 延迟 2 秒关闭
+        // Redirect 模式下跳转回首页
+        redirectUrl: isRedirectMode ? '/examples/' : undefined,
+      });
+
+      spinner.style.display = 'none';
+      iconSvg.style.display = 'block';
+
+      if (result.success) {
+        successIcon.style.display = 'block';
+        errorIcon.style.display = 'none';
+        title.textContent = 'Authorization Successful';
+        message.textContent = isRedirectMode 
+          ? 'You have been successfully authorized. Redirecting back...'
+          : 'You have been successfully authorized. This window will close automatically.';
+        showCountdown(2);
+      } else {
+        successIcon.style.display = 'none';
+        errorIcon.style.display = 'block';
+        title.textContent = 'Authorization Failed';
+        message.textContent = 'The request was timed out or cancelled.';
+
+        const errorDesc = result.data.error_description || result.data.error;
+        if (errorDesc) {
+          const errorDiv = document.createElement('div');
+          errorDiv.className = 'error-detail';
+          errorDiv.textContent = errorDesc;
+          message.parentNode.insertBefore(errorDiv, countdown);
+        }
+
+        showCountdown(2);
+      }
+    } catch (error) {
+      spinner.style.display = 'none';
+      iconSvg.style.display = 'block';
+      successIcon.style.display = 'none';
+      errorIcon.style.display = 'block';
+      title.textContent = 'Authorization Failed';
+      message.textContent = 'An unexpected error occurred.';
+
+      const errorDiv = document.createElement('div');
+      errorDiv.className = 'error-detail';
+      errorDiv.textContent = error.message || 'Failed to load callback handler';
+      message.parentNode.insertBefore(errorDiv, countdown);
+
+      setTimeout(() => window.close(), 3000);
+    }
+  </script>
+</body>
+
+</html>
