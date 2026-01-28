@@ -55,16 +55,18 @@ export function calculatePopupPosition(width: number, height: number): { left: n
     throw new Error(`Invalid height: must be a positive number, got ${height}`);
   }
 
-  const screenLeft = window.screenLeft ?? window.screenX ?? 0;
-  const screenTop = window.screenTop ?? window.screenY ?? 0;
-  const screenWidth = window.screen?.width ?? 1024;
-  const screenHeight = window.screen?.height ?? 768;
+  const windowWidth = window.outerWidth ?? window.innerWidth ?? 1024;
+  const windowHeight = window.outerHeight ?? window.innerHeight ?? 768;
+  const windowLeft = window.screenLeft ?? window.screenX ?? 0;
+  const windowTop = window.screenTop ?? window.screenY ?? 0;
 
-  const safeWidth = Math.min(width, screenWidth);
-  const safeHeight = Math.min(height, screenHeight);
+  const screenWidth = window.screen?.width ?? 1920;
+  const screenHeight = window.screen?.height ?? 1080;
+  const safeWidth = Math.min(width, screenWidth, windowWidth);
+  const safeHeight = Math.min(height, screenHeight, windowHeight);
 
-  const left = Math.max(0, screenLeft + (screenWidth - safeWidth) / 2);
-  const top = Math.max(0, screenTop + (screenHeight - safeHeight) / 2);
+  const left = Math.max(0, windowLeft + (windowWidth - safeWidth) / 2);
+  const top = Math.max(0, windowTop + (windowHeight - safeHeight) / 2);
 
   return { left: Math.round(left), top: Math.round(top) };
 }
