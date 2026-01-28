@@ -5,7 +5,7 @@
 
 一个健壮、标准化的 OAuth/SSO 弹窗授权解决方案。
 
-[English](./README.md)
+[English](./README.md) | [LLM/Agent 参考文档](./llms.txt)
 
 ## 特性
 

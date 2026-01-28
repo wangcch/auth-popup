@@ -5,7 +5,7 @@
 
 A robust, standardized solution for OAuth/SSO popup authorization in web applications.
 
-[中文文档](./README.zh-CN.md)
+[中文文档](./README.zh-CN.md) | [LLM/Agent Reference](./llms.txt)
 
 ## Features
 

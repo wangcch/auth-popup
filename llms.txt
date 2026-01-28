@@ -1,0 +1,312 @@
+# auth-popup
+
+> OAuth/SSO popup authorization library for web applications
+
+## Installation
+
+```bash
+npm install auth-popup
+```
+
+## Core Concepts
+
+This library handles OAuth 2.0 authorization code flow using popups:
+1. Parent page opens popup with authorization URL
+2. User authenticates in popup
+3. OAuth provider redirects to your callback page with `code`
+4. Callback page sends code back to parent via postMessage
+5. Parent receives code and exchanges it for tokens (server-side)
+
+## Exports
+
+```typescript
+// Main API
+AuthPopup.open(options: AuthPopupOptions): Promise<AuthResult>
+handleCallback(options: CallbackOptions): { success: boolean; data: AuthResult | AuthError }
+
+// Security utilities
+generatePKCE(): Promise<PKCEChallenge>
+generateState(): string
+validateOrigin(origin: string, allowedOrigins: string[]): boolean
+
+// Browser utilities
+detectBrowser(): BrowserInfo
+isPopupBlocked(popup: Window | null): boolean
+
+// Also available (class API)
+CallbackHandler.init(options: CallbackOptions)
+```
+
+## Types
+
+```typescript
+interface AuthPopupOptions {
+  authUrl: string;              // Required. OAuth authorization URL
+  width?: number;               // Default: 500
+  height?: number;              // Default: 600
+  timeout?: number;             // Default: 120000 (2 min)
+  redirectFallback?: boolean;   // Default: true
+  allowedOrigins?: string[];    // Default: [location.origin]
+  forceClosePopup?: boolean;    // Default: false
+}
+
+interface CallbackOptions {
+  allowedOrigins: string[];     // Required. Allowed parent origins
+  autoClose?: boolean;          // Default: true
+  autoCloseDelay?: number;      // Default: 100
+  redirectUrl?: string;         // Optional. Redirect URL for blocked popup mode
+}
+
+interface AuthResult {
+  code: string;                 // Authorization code
+  state?: string;               // State parameter
+}
+
+interface AuthError {
+  error: string;
+  error_description?: string;
+}
+
+interface PKCEChallenge {
+  codeVerifier: string;         // 128-char random string
+  codeChallenge: string;        // Base64URL SHA-256 hash
+  codeChallengeMethod: 'S256';
+}
+
+interface BrowserInfo {
+  isMobile: boolean;
+  isTablet: boolean;
+  isSafari: boolean;
+  isChrome: boolean;
+  isEdge: boolean;
+  supportsPopup: boolean;
+}
+```
+
+## Usage
+
+### Parent Page
+
+```typescript
+import { AuthPopup, generatePKCE, generateState } from 'auth-popup';
+
+const pkce = await generatePKCE();
+const state = generateState();
+sessionStorage.setItem('pkce_verifier', pkce.codeVerifier);
+sessionStorage.setItem('auth_state', state);
+
+const authUrl = new URL('https://provider.com/authorize');
+authUrl.searchParams.set('client_id', 'YOUR_CLIENT_ID');
+authUrl.searchParams.set('redirect_uri', 'https://yourapp.com/callback');
+authUrl.searchParams.set('response_type', 'code');
+authUrl.searchParams.set('state', state);
+authUrl.searchParams.set('code_challenge', pkce.codeChallenge);
+authUrl.searchParams.set('code_challenge_method', 'S256');
+
+try {
+  const result = await AuthPopup.open({
+    authUrl: authUrl.toString(),
+    allowedOrigins: [window.location.origin],
+  });
+  console.log('Code:', result.code);
+} catch (error) {
+  console.error('Auth failed:', error);
+}
+```
+
+### Callback Page
+
+```html
+<script type="module">
+  import { handleCallback } from 'auth-popup';
+  handleCallback({
+    allowedOrigins: ['https://yourapp.com'],
+    autoClose: true,
+  });
+</script>
+```
+
+## Error Handling
+
+### Error Types
+
+```typescript
+// Popup errors
+'Popup was blocked by browser'
+'Authorization timed out'           // Exceeds timeout option
+'Authorization was cancelled'       // User closed popup
+
+// Callback errors
+'Invalid origin: ...'               // Origin not in allowedOrigins
+'No authorization code received'    // Missing code parameter
+'Authorization failed: ...'         // OAuth provider returned error
+```
+
+## OAuth Provider Examples
+
+### GitHub (no PKCE)
+```typescript
+const authUrl = new URL('https://github.com/login/oauth/authorize');
+authUrl.searchParams.set('client_id', clientId);
+authUrl.searchParams.set('redirect_uri', redirectUri);
+authUrl.searchParams.set('scope', 'user');
+authUrl.searchParams.set('state', state);
+```
+
+### Google (with PKCE)
+```typescript
+const pkce = await generatePKCE();
+const authUrl = new URL('https://accounts.google.com/o/oauth2/v2/auth');
+authUrl.searchParams.set('client_id', clientId);
+authUrl.searchParams.set('redirect_uri', redirectUri);
+authUrl.searchParams.set('response_type', 'code');
+authUrl.searchParams.set('scope', 'openid profile email');
+authUrl.searchParams.set('state', state);
+authUrl.searchParams.set('code_challenge', pkce.codeChallenge);
+authUrl.searchParams.set('code_challenge_method', 'S256');
+```
+
+### Microsoft / Azure AD
+```typescript
+const tenant = 'common'; // or specific tenant ID
+const authUrl = new URL(`https://login.microsoftonline.com/${tenant}/oauth2/v2.0/authorize`);
+authUrl.searchParams.set('client_id', clientId);
+authUrl.searchParams.set('redirect_uri', redirectUri);
+authUrl.searchParams.set('response_type', 'code');
+authUrl.searchParams.set('scope', 'openid profile email');
+authUrl.searchParams.set('state', state);
+authUrl.searchParams.set('code_challenge', pkce.codeChallenge);
+authUrl.searchParams.set('code_challenge_method', 'S256');
+```
+
+### Other Providers
+
+| Provider | URL Pattern | Notes |
+|----------|-------------|-------|
+| Apple | `https://appleid.apple.com/auth/authorize` | Use `response_mode=form_post` |
+| Facebook | `https://www.facebook.com/v18.0/dialog/oauth` | Scope: `public_profile,email` |
+| Discord | `https://discord.com/api/oauth2/authorize` | Scope: `identify email` |
+| Slack | `https://slack.com/oauth/v2/authorize` | Different token endpoint |
+| LinkedIn | `https://www.linkedin.com/oauth/v2/authorization` | OpenID Connect |
+| Feishu/Lark | `https://open.feishu.cn/open-apis/authen/v1/authorize` | Use `app_id` instead of `client_id` |
+| GitLab | `https://gitlab.com/oauth/authorize` | Self-hosted available |
+| Twitter/X | `https://twitter.com/i/oauth2/authorize` | Requires PKCE | GitHub
+```
+https://github.com/login/oauth/authorize
+  ?client_id={id}
+  &redirect_uri={uri}
+  &scope=user
+  &state={state}
+```
+
+## Security Notes
+
+- Always validate state parameter
+- Use PKCE for public clients
+- Exchange codes server-side
+- Never expose client_secret in frontend
+Common Use Cases
+
+### Mobile Fallback
+```typescript
+import { detectBrowser } from 'auth-popup';
+
+const browser = detectBrowser();
+if (!browser.supportsPopup) {
+  // Redirect instead of popup on mobile
+  window.location.href = authUrl;
+} else {
+  const result = await AuthPopup.open({ authUrl });
+}
+```
+
+### Popup Blocked Handling
+```typescript
+import { isPopupBlocked } from 'auth-popup';
+
+const popup = window.open(authUrl);
+if (isPopupBlocked(popup)) {
+  alert('Please allow popups and try again');
+  // Or fallback to redirect
+  window.location.href = authUrl;
+}
+```
+
+### Safari Redirect Mode
+```typescript
+// In callback page, detect if opened in redirect mode (no opener)
+handleCallback({
+  allowedOrigins: ['https://yourapp.com'],
+  redirectUrl: 'https://yourapp.com/dashboard', // Redirect after success
+});
+```
+
+### Custom Timeout
+```typescript
+const result = await AuthPopup.open({
+  authUrl,
+  timeout: 300000, // 5 minutes for slow users
+});
+```
+
+### Multiple Origins (Dev/Staging/Prod)
+```typescript
+const allowedOrigins = [
+  'http://localhost:3000',
+  'https://staging.example.com',
+  'https://example.com',
+];
+
+await AuthPopup.open({ authUrl, allowedOrigins });
+```
+
+## Security Best Practices
+
+1. **Always validate state parameter** - Prevents CSRF attacks
+   ```typescript
+   if (result.state !== sessionStorage.getItem('auth_state')) {
+     throw new Error('State mismatch - possible CSRF attack');
+   }
+   ```
+
+2. **Use PKCE for public clients** - SPAs, mobile apps
+   ```typescript
+   const pkce = await generatePKCE();
+   // Send codeChallenge to auth, codeVerifier to token endpoint
+   ```
+
+3. **Exchange codes server-side** - Never expose client_secret in frontend
+   ```typescript
+   // ✅ Good: Backend handles token exchange
+   fetch('/api/auth/callback', { body: { code } })
+   
+   // ❌ Bad: Frontend exposes secret
+   fetch('https://oauth.com/token', { body: { client_secret } })
+   ```
+
+4. **Restrict allowedOrigins** - Never use wildcards
+   ```typescript
+   // ✅ Good: Specific origins
+   allowedOrigins: ['https://yourapp.com']
+   
+   // ❌ Bad: Allows any origin
+   allowedOrigins: ['*']
+   ```
+
+5. **Validate origin in callback** - Prevents malicious parent windows
+   ```typescript
+   handleCallback({
+     allowedOrigins: ['https://yourapp.com'], // Enforced
+   });
+   ```
+
+## Troubleshooting
+
+| Issue | Solution |
+|-------|----------|
+| Popup blocked | Check `redirectFallback: true` (default), or use redirect mode |
+| Safari not closing | Use `redirectUrl` in callback options |
+| Timeout too short | Increase `timeout` option (default 120s) |
+| Origin mismatch | Add all parent origins to `allowedOrigins` |
+| State mismatch | Ensure state is stored before popup opens |
+| PKCE verification fails | Send correct `code_verifier` to token endpoint |
