@@ -54,6 +54,11 @@ export interface CallbackOptions {
   autoClose?: boolean;
   /** Delay in milliseconds before auto-closing (default: 100) */
   autoCloseDelay?: number;
+  /**
+   * URL to redirect to after successful callback in redirect mode (when popup is blocked).
+   * If not provided and no window.opener exists, the page will stay open showing a success message.
+   */
+  redirectUrl?: string;
 }
 
 /**

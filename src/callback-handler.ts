@@ -137,20 +137,29 @@ export class CallbackHandler {
   }
 
   /**
-   * Auto close popup if enabled
+   * Auto close popup if enabled, or redirect in redirect mode
    */
   private autoClose(): void {
-    if (this.options.autoClose !== false) {
-      const delay = this.options.autoCloseDelay ?? 100;
-      const safeDelay = Number.isFinite(delay) && delay >= 0 ? delay : 100;
-      setTimeout(() => {
+    if (this.options.autoClose === false) {
+      return;
+    }
+
+    const delay = this.options.autoCloseDelay ?? 100;
+    const safeDelay = Number.isFinite(delay) && delay >= 0 ? delay : 100;
+
+    const isRedirectMode = !window.opener || window.opener.closed;
+
+    setTimeout(() => {
+      if (isRedirectMode && this.options.redirectUrl) {
+        window.location.href = this.options.redirectUrl;
+      } else {
         try {
           window.close();
-        } catch (e) {
+        } catch {
           // ignore
         }
-      }, safeDelay);
-    }
+      }
+    }, safeDelay);
   }
 }
 
