@@ -15,6 +15,7 @@ A robust, standardized solution for OAuth/SSO popup authorization in web applica
 - 📦 **Zero dependencies** - Lightweight and tree-shakeable
 - 🎯 **TypeScript first** - Full type definitions included
 - ⚡ **Modern** - ES modules with UMD fallback
+- 🤖 **AI-friendly** - Comprehensive [llms.txt](./llms.txt) for LLM/Agent integration
 
 https://github.com/user-attachments/assets/c1c6ccb9-b23a-416b-9f6c-395adc493150
 

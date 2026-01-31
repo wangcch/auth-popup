@@ -15,6 +15,7 @@
 - 📦 **零依赖** - 轻量且支持 tree-shaking
 - 🎯 **TypeScript 优先** - 完整的类型定义
 - ⚡ **现代化** - ES 模块，兼容 UMD
+- 🤖 **AI 友好** - 提供完善的 [llms.txt](./llms.txt) 供 LLM/Agent 集成
 
 https://github.com/user-attachments/assets/c1c6ccb9-b23a-416b-9f6c-395adc493150
 
