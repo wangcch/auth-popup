@@ -125,7 +125,7 @@ async function login() {
   <body>
     <p>正在处理授权...</p>
     <script type="module">
-      import { handleCallback } from 'auth-popup';
+      import { handleCallback } from 'https://cdn.jsdelivr.net/npm/auth-popup/+esm';
 
       const result = handleCallback({
         allowedOrigins: ['https://yourapp.com'],
@@ -139,6 +139,21 @@ async function login() {
     </script>
   </body>
 </html>
+```
+
+**替代方案 (UMD)：** 适用于旧版浏览器或不支持模块的项目：
+
+```html
+<script src="https://cdn.jsdelivr.net/npm/auth-popup"></script>
+<script>
+  const result = window.AuthPopup.handleCallback({
+    allowedOrigins: ['https://yourapp.com'],
+    autoClose: true,
+  });
+  if (!result.success) {
+    document.body.innerHTML = `<p>错误: ${result.data.error_description || result.data.error}</p>`;
+  }
+</script>
 ```
 
 ## API 参考

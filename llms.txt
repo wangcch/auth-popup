@@ -117,9 +117,19 @@ try {
 ### Callback Page
 
 ```html
+<!-- Option 1: Using CDN (simplest, no build required) -->
 <script type="module">
-  import { handleCallback } from 'auth-popup';
+  import { handleCallback } from 'https://cdn.jsdelivr.net/npm/auth-popup/+esm';
   handleCallback({
+    allowedOrigins: ['https://yourapp.com'],
+    autoClose: true,
+  });
+</script>
+
+<!-- Option 2: Using UMD bundle (no module system) -->
+<script src="https://unpkg.com/auth-popup@1.0.0/dist/auth-popup.umd.cjs"></script>
+<script>
+  AuthPopup.handleCallback({
     allowedOrigins: ['https://yourapp.com'],
     autoClose: true,
   });

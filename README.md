@@ -125,7 +125,7 @@ Create a simple callback page at your redirect URI:
   <body>
     <p>Processing authorization...</p>
     <script type="module">
-      import { handleCallback } from 'auth-popup';
+      import { handleCallback } from 'https://cdn.jsdelivr.net/npm/auth-popup/+esm';
 
       const result = handleCallback({
         allowedOrigins: ['https://yourapp.com'],
@@ -139,6 +139,21 @@ Create a simple callback page at your redirect URI:
     </script>
   </body>
 </html>
+```
+
+**Alternative (UMD):** For older browsers or projects without module support:
+
+```html
+<script src="https://unpkg.com/auth-popup@latest/dist/auth-popup.umd.cjs"></script>
+<script>
+  const result = window.AuthPopup.handleCallback({
+    allowedOrigins: ['https://yourapp.com'],
+    autoClose: true,
+  });
+  if (!result.success) {
+    document.body.innerHTML = `<p>Error: ${result.data.error_description || result.data.error}</p>`;
+  }
+</script>
 ```
 
 ## API Reference
