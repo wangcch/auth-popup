@@ -16,6 +16,8 @@
 - 🎯 **TypeScript 优先** - 完整的类型定义
 - ⚡ **现代化** - ES 模块，兼容 UMD
 
+https://github.com/user-attachments/assets/c1c6ccb9-b23a-416b-9f6c-395adc493150
+
 ## 工作原理
 
 ```mermaid
