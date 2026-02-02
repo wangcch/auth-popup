@@ -909,9 +909,11 @@
       setLoading(button, true);
 
       try {
-        // Generate state
+        // Generate state and PKCE
         const state = generateState();
+        const pkce = await generatePKCE();
         sessionStorage.setItem('state', state);
+        sessionStorage.setItem('pkce_verifier', pkce.codeVerifier);
 
         // Check if App ID is provided
         const appIdInput = document.getElementById('feishu-app-id');
@@ -927,13 +929,15 @@
           authUrl.searchParams.set('app_id', appId);
           authUrl.searchParams.set('redirect_uri', window.location.origin + '/examples/callback-local.html');
           authUrl.searchParams.set('state', state);
+          authUrl.searchParams.set('code_challenge', pkce.codeChallenge);
+          authUrl.searchParams.set('code_challenge_method', 'S256');
 
           // Add scopes if provided
           if (scopes) {
             authUrl.searchParams.set('scope', scopes);
           }
 
-          console.log('🚀 Using real Feishu OAuth' + (scopes ? ' with scopes' : '') + ':', authUrl.toString());
+          console.log('🚀 Using real Feishu OAuth with PKCE' + (scopes ? ' and scopes' : '') + ':', authUrl.toString());
         } else {
           // Demo mode
           authUrl = new URL(window.location.origin + '/examples/callback-local.html');
@@ -989,11 +993,14 @@
         } else {
           // Real OAuth: try to fetch user from backend
           try {
-            // Step 1: Exchange code for token
+            // Step 1: Exchange code for token (with PKCE verifier)
             const tokenRes = await fetch('/api/feishu/token', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ code: result.code }),
+              body: JSON.stringify({ 
+                code: result.code,
+                code_verifier: pkce.codeVerifier 
+              }),
             });
 
             if (!tokenRes.ok) {

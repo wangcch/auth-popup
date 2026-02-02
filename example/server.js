@@ -116,51 +116,43 @@ async function getGitHubUser(accessToken) {
   return response.json();
 }
 
-// Get Feishu app_access_token
-async function getFeishuAppToken() {
-  const response = await fetch('https://open.feishu.cn/open-apis/auth/v3/app_access_token/internal', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      app_id: FEISHU_APP_ID,
-      app_secret: FEISHU_APP_SECRET,
-    }),
-  });
-
-  const data = await response.json();
-
-  if (data.code !== 0) {
-    throw new Error(data.msg || 'Failed to get app_access_token');
-  }
-
-  return data.app_access_token;
-}
-
 // Exchange Feishu code for user access token
-async function exchangeFeishuCodeForToken(code) {
-  const appToken = await getFeishuAppToken();
+async function exchangeFeishuCodeForToken(code, codeVerifier) {
+  const params = {
+    grant_type: 'authorization_code',
+    client_id: FEISHU_APP_ID,
+    client_secret: FEISHU_APP_SECRET,
+    code,
+    redirect_uri: `http://localhost:${PORT}/examples/callback-local.html`,
+  };
 
-  const response = await fetch('https://open.feishu.cn/open-apis/authen/v1/oidc/access_token', {
+  // Add code_verifier if using PKCE
+  if (codeVerifier) {
+    params.code_verifier = codeVerifier;
+  }
+
+  const response = await fetch('https://open.feishu.cn/open-apis/authen/v2/oauth/token', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      Authorization: `Bearer ${appToken}`,
     },
-    body: JSON.stringify({
-      grant_type: 'authorization_code',
-      code,
-    }),
+    body: JSON.stringify(params),
   });
 
   const data = await response.json();
 
   if (data.code !== 0) {
-    throw new Error(data.msg || 'Failed to exchange code');
+    throw new Error(data.error_description || data.error || data.msg || 'Failed to exchange code');
   }
 
-  return data.data;
+  return {
+    access_token: data.access_token,
+    token_type: data.token_type,
+    expires_in: data.expires_in,
+    refresh_token: data.refresh_token,
+    refresh_token_expires_in: data.refresh_token_expires_in,
+    scope: data.scope,
+  };
 }
 
 // Get Feishu user info
@@ -389,7 +381,7 @@ const server = http.createServer(async (req, res) => {
       }
 
       console.log('🔄 Exchanging Feishu code for token...');
-      const tokenData = await exchangeFeishuCodeForToken(code);
+      const tokenData = await exchangeFeishuCodeForToken(code, code_verifier);
       console.log('✅ Feishu token received');
 
       sendJson(res, 200, {

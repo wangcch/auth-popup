@@ -198,7 +198,7 @@ authUrl.searchParams.set('code_challenge_method', 'S256');
 | Discord | `https://discord.com/api/oauth2/authorize` | Scope: `identify email` |
 | Slack | `https://slack.com/oauth/v2/authorize` | Different token endpoint |
 | LinkedIn | `https://www.linkedin.com/oauth/v2/authorization` | OpenID Connect |
-| Feishu/Lark | `https://open.feishu.cn/open-apis/authen/v1/authorize` | Use `app_id` instead of `client_id` |
+| Feishu/Lark | `https://open.feishu.cn/open-apis/authen/v1/authorize` | Use `app_id` (not `client_id`), supports PKCE |
 | GitLab | `https://gitlab.com/oauth/authorize` | Self-hosted available |
 | Twitter/X | `https://twitter.com/i/oauth2/authorize` | Requires PKCE | GitHub
 ```
