@@ -37,7 +37,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/wangcch/auth-popup.git"
+    "url": "git+https://github.com/wangcch/auth-popup.git"
   },
   "devDependencies": {
     "@types/node": "^22.10.0",
