@@ -37,6 +37,23 @@ export interface AuthError {
 }
 
 /**
+ * Custom error thrown when popup is blocked by browser
+ */
+export class PopupBlockedError extends Error {
+  readonly isBlocked = true;
+  readonly redirecting: boolean;
+
+  constructor(message: string, redirecting = false) {
+    super(message);
+    this.name = 'PopupBlockedError';
+    this.redirecting = redirecting;
+    if (Error.captureStackTrace) {
+      Error.captureStackTrace(this, PopupBlockedError);
+    }
+  }
+}
+
+/**
  * Callback Message Structure
  */
 export interface CallbackMessage {

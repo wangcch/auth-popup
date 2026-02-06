@@ -1,5 +1,6 @@
 export { AuthPopup } from './auth-popup';
 export { CallbackHandler, handleCallback } from './callback-handler';
+export { PopupBlockedError } from './types';
 
 export { generatePKCE, generateState, validateOrigin } from './utils/security';
 export { detectBrowser, isPopupBlocked } from './utils/browser';

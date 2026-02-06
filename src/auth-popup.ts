@@ -1,4 +1,5 @@
 import type { AuthPopupOptions, AuthResult, AuthError, CallbackMessage } from './types';
+import { PopupBlockedError } from './types';
 import { detectBrowser, isPopupBlocked, buildWindowFeatures } from './utils/browser';
 import { validateOrigin } from './utils/security';
 
@@ -88,9 +89,9 @@ export class AuthPopup {
     if (isPopupBlocked(this.popup)) {
       if (redirectFallback) {
         this.redirectToAuth(authUrl);
-        throw new Error('Popup blocked, redirecting to authorization page');
+        throw new PopupBlockedError('Popup blocked, redirecting to authorization page', true);
       } else {
-        throw new Error('Popup was blocked by browser');
+        throw new PopupBlockedError('Popup was blocked by browser', false);
       }
     }
 
