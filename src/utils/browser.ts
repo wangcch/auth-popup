@@ -4,12 +4,26 @@ import type { BrowserInfo } from '../types';
  * Detect browser capabilities
  */
 export function detectBrowser(): BrowserInfo {
+  if (typeof navigator === 'undefined' || !navigator.userAgent) {
+    return {
+      isMobile: false,
+      isTablet: false,
+      isSafari: false,
+      isChrome: false,
+      isFirefox: false,
+      isEdge: false,
+      supportsPopup: false,
+    };
+  }
+
   const ua = navigator.userAgent.toLowerCase();
 
-  const isMobile = /mobile|android|iphone|ipod|blackberry|iemobile|opera mini/i.test(ua);
-  const isTablet = /ipad|tablet|kindle|playbook|silk/i.test(ua);
+  const isTablet = /ipad|tablet|kindle|playbook|silk/i.test(ua) || (/android/i.test(ua) && !/mobile/i.test(ua));
+  const isMobile =
+    /mobile|iphone|ipod|blackberry|iemobile|opera mini/i.test(ua) || (/android/i.test(ua) && /mobile/i.test(ua));
   const isSafari = /safari/i.test(ua) && !/chrome|chromium|crios/i.test(ua);
   const isChrome = /chrome|chromium|crios/i.test(ua) && !/edge|edg/i.test(ua);
+  const isFirefox = /firefox|fxios/i.test(ua);
   const isEdge = /edge|edg/i.test(ua);
 
   const hasPopupAPI = typeof window !== 'undefined' && typeof window.open === 'function';
@@ -20,6 +34,7 @@ export function detectBrowser(): BrowserInfo {
     isTablet,
     isSafari,
     isChrome,
+    isFirefox,
     isEdge,
     supportsPopup,
   };
@@ -29,12 +44,12 @@ export function detectBrowser(): BrowserInfo {
  * Check if popup was blocked
  */
 export function isPopupBlocked(popup: Window | null): boolean {
-  if (!popup) {
+  if (!popup || popup.closed) {
     return true;
   }
 
   try {
-    return popup.closed === true;
+    return popup.innerHeight === 0 && popup.innerWidth === 0;
   } catch {
     return false;
   }

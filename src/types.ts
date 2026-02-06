@@ -69,6 +69,7 @@ export interface BrowserInfo {
   isTablet: boolean;
   isSafari: boolean;
   isChrome: boolean;
+  isFirefox: boolean;
   isEdge: boolean;
   supportsPopup: boolean;
 }
