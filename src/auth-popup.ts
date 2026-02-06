@@ -73,14 +73,14 @@ export class AuthPopup {
     let features: string;
     let target: string;
 
-    if (!browserInfo.supportsPopup) {
-      // Mobile: open in new tab instead of popup
-      features = '';
-      target = '_blank';
-    } else {
+    if (browserInfo.supportsPopup) {
       // Desktop: use centered popup
       features = buildWindowFeatures(width, height);
       target = 'auth-popup';
+    } else {
+      // Mobile: open in new tab instead of popup
+      features = '';
+      target = '_blank';
     }
 
     this.popup = window.open(authUrl, target, features);

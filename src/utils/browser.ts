@@ -34,11 +34,7 @@ export function isPopupBlocked(popup: Window | null): boolean {
   }
 
   try {
-    if (popup.closed) {
-      return true;
-    }
-
-    return !popup.window;
+    return popup.closed === true;
   } catch {
     return false;
   }
