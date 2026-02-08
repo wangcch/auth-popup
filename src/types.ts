@@ -42,11 +42,13 @@ export interface AuthError {
 export class PopupBlockedError extends Error {
   readonly isBlocked = true;
   readonly redirecting: boolean;
+  readonly authUrl: string;
 
-  constructor(message: string, redirecting = false) {
+  constructor(message: string, redirecting = false, authUrl = '') {
     super(message);
     this.name = 'PopupBlockedError';
     this.redirecting = redirecting;
+    this.authUrl = authUrl;
     if (Error.captureStackTrace) {
       Error.captureStackTrace(this, PopupBlockedError);
     }

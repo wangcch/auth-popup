@@ -89,9 +89,9 @@ export class AuthPopup {
     if (isPopupBlocked(this.popup)) {
       if (redirectFallback) {
         this.redirectToAuth(authUrl);
-        throw new PopupBlockedError('Popup blocked, redirecting to authorization page', true);
+        throw new PopupBlockedError('Popup blocked, redirecting to authorization page', true, authUrl);
       } else {
-        throw new PopupBlockedError('Popup was blocked by browser', false);
+        throw new PopupBlockedError('Popup was blocked by browser', false, authUrl);
       }
     }
 
