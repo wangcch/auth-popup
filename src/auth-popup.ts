@@ -1,5 +1,5 @@
-import type { AuthPopupOptions, AuthResult, AuthError, CallbackMessage } from './types';
-import { PopupBlockedError } from './types';
+import type { AuthPopupOptions, AuthResult, AuthError, CallbackMessage, ListenOptions } from './types';
+import { PopupBlockedError, AUTH_POPUP_CHANNEL_NAME } from './types';
 import { detectBrowser, isPopupBlocked, buildWindowFeatures } from './utils/browser';
 import { validateOrigin } from './utils/security';
 
@@ -10,7 +10,8 @@ export class AuthPopup {
   private static readonly DEFAULT_WIDTH = 500;
   private static readonly DEFAULT_HEIGHT = 600;
   private static readonly DEFAULT_TIMEOUT = 120000;
-  private static readonly CHANNEL_NAME = 'auth-popup-channel';
+
+  private static activeListener: (() => void) | null = null;
 
   private popup: Window | null = null;
   private broadcastChannel: BroadcastChannel | null = null;
@@ -26,6 +27,132 @@ export class AuthPopup {
   static async open(options: AuthPopupOptions): Promise<AuthResult> {
     const instance = new AuthPopup();
     return instance.authorize(options);
+  }
+
+  /**
+   * Listen for authorization callback result.
+   *
+   * Use this after catching `PopupBlockedError` to set up your own UI
+   * (custom popup, iframe, modal, etc.) while the library listens for
+   * the callback result via BroadcastChannel and postMessage.
+   *
+   * @example
+   * ```ts
+   * try {
+   *   const result = await AuthPopup.open({ authUrl, redirectFallback: false });
+   * } catch (err) {
+   *   if (err instanceof PopupBlockedError) {
+   *     // Show your own popup / iframe / modal
+   *     myCustomPopup.open(err.authUrl);
+   *     // Listen for the callback result
+   *     const result = await AuthPopup.listen({ timeout: 60000 });
+   *   }
+   * }
+   * ```
+   */
+  static listen(options: ListenOptions = {}): Promise<AuthResult> {
+    const { timeout = AuthPopup.DEFAULT_TIMEOUT, allowedOrigins = [window.location.origin], signal } = options;
+
+    if (!Number.isFinite(timeout) || timeout <= 0) {
+      throw new Error(`Invalid timeout: ${timeout}`);
+    }
+    if (!Array.isArray(allowedOrigins) || allowedOrigins.length === 0) {
+      throw new Error('allowedOrigins must be a non-empty array');
+    }
+
+    // Cancel any previous active listener
+    if (AuthPopup.activeListener) {
+      AuthPopup.activeListener();
+      AuthPopup.activeListener = null;
+    }
+
+    return new Promise<AuthResult>((resolve, reject) => {
+      let isSettled = false;
+      let bc: BroadcastChannel | null = null;
+      let timeoutId: number | null = null;
+
+      const cleanup = () => {
+        AuthPopup.activeListener = null;
+        if (timeoutId) {
+          window.clearTimeout(timeoutId);
+          timeoutId = null;
+        }
+        if (bc) {
+          try {
+            bc.close();
+          } catch {
+            /* ignore */
+          }
+          bc = null;
+        }
+        window.removeEventListener('message', onPostMessage);
+        if (signal) {
+          signal.removeEventListener('abort', onAbort);
+        }
+      };
+
+      // Register so a subsequent listen() call can cancel this one
+      AuthPopup.activeListener = () => {
+        if (!isSettled) {
+          isSettled = true;
+          cleanup();
+          reject(new Error('Listen was superseded by a new listen() call'));
+        }
+      };
+
+      const settle = (result: AuthResult | null, error?: AuthError | Error) => {
+        if (isSettled) return;
+        isSettled = true;
+        cleanup();
+        if (result) {
+          resolve(result);
+        } else if (error) {
+          reject(error instanceof Error ? error : new Error(error.error_description || error.error));
+        }
+      };
+
+      const handleData = (data: unknown) => {
+        if (!data || typeof data !== 'object') return;
+        const message = data as CallbackMessage;
+
+        if (message.type === 'auth-success') {
+          const result = message.data as AuthResult;
+          if (result.code) settle(result);
+        } else if (message.type === 'auth-error') {
+          settle(null, message.data as AuthError);
+        }
+      };
+
+      if (typeof BroadcastChannel !== 'undefined') {
+        try {
+          bc = new BroadcastChannel(AUTH_POPUP_CHANNEL_NAME);
+          bc.onmessage = (event: MessageEvent) => handleData(event.data);
+        } catch {
+          // BroadcastChannel not available
+        }
+      }
+
+      const onPostMessage = (event: MessageEvent) => {
+        if (!validateOrigin(event.origin, allowedOrigins)) return;
+        handleData(event.data);
+      };
+      window.addEventListener('message', onPostMessage);
+
+      const onAbort = () => {
+        settle(null, new Error('Listen was aborted'));
+      };
+      if (signal) {
+        if (signal.aborted) {
+          settle(null, new Error('Listen was aborted'));
+          return;
+        }
+        signal.addEventListener('abort', onAbort);
+      }
+
+      timeoutId = window.setTimeout(() => {
+        settle(null, new Error('Authorization timeout'));
+      }, timeout);
+    });
   }
 
   /**
@@ -106,7 +233,7 @@ export class AuthPopup {
   private setupCommunication(allowedOrigins: string[]): void {
     if (typeof BroadcastChannel !== 'undefined') {
       try {
-        this.broadcastChannel = new BroadcastChannel(AuthPopup.CHANNEL_NAME);
+        this.broadcastChannel = new BroadcastChannel(AUTH_POPUP_CHANNEL_NAME);
       } catch (error) {
         console.warn('BroadcastChannel not available:', error);
       }

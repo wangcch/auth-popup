@@ -81,6 +81,18 @@ export interface CallbackOptions {
 }
 
 /**
+ * Options for AuthPopup.listen() - standalone listener for custom popup/iframe recovery
+ */
+export interface ListenOptions {
+  /** Timeout in milliseconds (default: 120000 - 2 minutes) */
+  timeout?: number;
+  /** Allowed origins for postMessage validation (default: [window.location.origin]) */
+  allowedOrigins?: string[];
+  /** AbortSignal to cancel the listener */
+  signal?: AbortSignal;
+}
+
+/**
  * Browser Detection Result
  */
 export interface BrowserInfo {
@@ -101,3 +113,8 @@ export interface PKCEChallenge {
   codeChallenge: string;
   codeChallengeMethod: 'S256';
 }
+
+/**
+ * Shared BroadcastChannel name used by AuthPopup and CallbackHandler
+ */
+export const AUTH_POPUP_CHANNEL_NAME = 'auth-popup-channel';

@@ -1,11 +1,10 @@
 import type { CallbackOptions, CallbackMessage, AuthResult, AuthError } from './types';
+import { AUTH_POPUP_CHANNEL_NAME } from './types';
 
 /**
  * Callback Handler for authorization callback page
  */
 export class CallbackHandler {
-  private static readonly CHANNEL_NAME = 'auth-popup-channel';
-
   static init(options: CallbackOptions): { success: boolean; data: AuthResult | AuthError } {
     const handler = new CallbackHandler(options);
     return handler.process();
@@ -105,7 +104,7 @@ export class CallbackHandler {
   private sendViaBroadcastChannel(message: CallbackMessage): void {
     if (typeof BroadcastChannel !== 'undefined') {
       try {
-        const channel = new BroadcastChannel(CallbackHandler.CHANNEL_NAME);
+        const channel = new BroadcastChannel(AUTH_POPUP_CHANNEL_NAME);
         channel.postMessage(message);
         channel.close();
       } catch (error) {
