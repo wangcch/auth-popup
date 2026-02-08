@@ -22,7 +22,14 @@ This library handles OAuth 2.0 authorization code flow using popups:
 ```typescript
 // Main API
 AuthPopup.open(options: AuthPopupOptions): Promise<AuthResult>
+AuthPopup.listen(options?: ListenOptions): Promise<AuthResult>  // For custom popup/iframe recovery
 handleCallback(options: CallbackOptions): { success: boolean; data: AuthResult | AuthError }
+
+// Error classes
+PopupBlockedError  // Thrown when popup is blocked, has .authUrl, .redirecting, .isBlocked
+
+// Constants
+AUTH_POPUP_CHANNEL_NAME  // Shared BroadcastChannel name ('auth-popup-channel')
 
 // Security utilities
 generatePKCE(): Promise<PKCEChallenge>
@@ -55,6 +62,12 @@ interface CallbackOptions {
   autoClose?: boolean;          // Default: true
   autoCloseDelay?: number;      // Default: 100
   redirectUrl?: string;         // Optional. Redirect URL for blocked popup mode
+}
+
+interface ListenOptions {
+  timeout?: number;             // Default: 120000 (2 min)
+  allowedOrigins?: string[];    // Default: [location.origin]
+  signal?: AbortSignal;         // Cancel listener
 }
 
 interface AuthResult {
@@ -230,15 +243,30 @@ if (!browser.supportsPopup) {
 }
 ```
 
-### Popup Blocked Handling
+### Popup Blocked Handling (with AuthPopup.listen)
 ```typescript
-import { isPopupBlocked } from 'auth-popup';
+import { AuthPopup, PopupBlockedError } from 'auth-popup';
 
-const popup = window.open(authUrl);
-if (isPopupBlocked(popup)) {
-  alert('Please allow popups and try again');
-  // Or fallback to redirect
-  window.location.href = authUrl;
+try {
+  const result = await AuthPopup.open({
+    authUrl,
+    redirectFallback: false,
+  });
+} catch (err) {
+  if (err instanceof PopupBlockedError) {
+    // Option 1: Custom popup (user-click context won't be blocked)
+    const popup = window.open(err.authUrl, '_blank', 'width=500,height=600');
+    const result = await AuthPopup.listen({ timeout: 60000 });
+
+    // Option 2: Custom modal with iframe (same-origin only)
+    showModal(err.authUrl);
+    const result = await AuthPopup.listen({ timeout: 60000 });
+
+    // Option 3: With AbortController
+    const ac = new AbortController();
+    const result = await AuthPopup.listen({ signal: ac.signal });
+    // ac.abort() to cancel
+  }
 }
 ```
 
@@ -314,7 +342,8 @@ await AuthPopup.open({ authUrl, allowedOrigins });
 
 | Issue | Solution |
 |-------|----------|
-| Popup blocked | Check `redirectFallback: true` (default), or use redirect mode |
+| Popup blocked | Use `redirectFallback: true` (default), redirect mode, or catch `PopupBlockedError` + `AuthPopup.listen()` |
+| iframe no response | In iframe `window.opener` is null; only BroadcastChannel works (same-origin) |
 | Safari not closing | Use `redirectUrl` in callback options |
 | Timeout too short | Increase `timeout` option (default 120s) |
 | Origin mismatch | Add all parent origins to `allowedOrigins` |

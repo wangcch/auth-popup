@@ -186,6 +186,59 @@ Promise<{
 }>;
 ```
 
+### AuthPopup.listen(options?)
+
+通过 BroadcastChannel 和 postMessage 监听授权回调结果。在捕获 `PopupBlockedError` 后使用，配合自定义 UI（弹窗、iframe、Modal 等）。
+
+#### 选项
+
+| 选项             | 类型          | 默认值              | 描述                          |
+| ---------------- | ------------- | ------------------- | ----------------------------- |
+| `timeout`        | `number`      | `120000`            | 超时时间（毫秒，默认 2 分钟） |
+| `allowedOrigins` | `string[]`    | `[location.origin]` | postMessage 来源验证白名单    |
+| `signal`         | `AbortSignal` | -                   | 用于取消监听的 AbortSignal    |
+
+#### 返回值
+
+```typescript
+Promise<AuthResult>;
+```
+
+#### 示例：自定义弹窗/iframe 恢复
+
+```typescript
+import { AuthPopup, PopupBlockedError } from 'auth-popup';
+
+try {
+  const result = await AuthPopup.open({
+    authUrl: authUrl.toString(),
+    redirectFallback: false, // 不自动重定向，自己处理
+  });
+  handleSuccess(result);
+} catch (error) {
+  if (error instanceof PopupBlockedError) {
+    // 展示自定义 UI（Modal、iframe 等）
+    showCustomAuthModal(error.authUrl);
+
+    // 通过 BroadcastChannel 监听回调结果
+    const result = await AuthPopup.listen({ timeout: 60000 });
+    handleSuccess(result);
+  }
+}
+```
+
+> **注意：** 使用 iframe 时，只有 BroadcastChannel 能工作（iframe 中 `window.opener` 为 `null`），需要同源回调页面。
+
+### PopupBlockedError
+
+弹窗被浏览器拦截时抛出的错误，包含恢复所需的属性：
+
+| 属性          | 类型      | 描述                       |
+| ------------- | --------- | -------------------------- |
+| `isBlocked`   | `boolean` | 始终为 `true`              |
+| `redirecting` | `boolean` | 页面是否正在重定向（回退） |
+| `authUrl`     | `string`  | 原始授权 URL               |
+
 ### handleCallback(options) / CallbackHandler.init(options)
 
 处理 OAuth 回调并将结果发送给父窗口。

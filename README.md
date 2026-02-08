@@ -186,6 +186,59 @@ Promise<{
 }>;
 ```
 
+### AuthPopup.listen(options?)
+
+Listens for an authorization callback result via BroadcastChannel and postMessage. Use this after catching `PopupBlockedError` to set up your own custom UI (popup, iframe, modal, etc.).
+
+#### Options
+
+| Option           | Type          | Default             | Description                                |
+| ---------------- | ------------- | ------------------- | ------------------------------------------ |
+| `timeout`        | `number`      | `120000`            | Timeout in milliseconds (2 minutes)        |
+| `allowedOrigins` | `string[]`    | `[location.origin]` | Allowed origins for postMessage validation |
+| `signal`         | `AbortSignal` | -                   | AbortSignal to cancel the listener         |
+
+#### Returns
+
+```typescript
+Promise<AuthResult>;
+```
+
+#### Example: Custom popup/iframe recovery
+
+```typescript
+import { AuthPopup, PopupBlockedError } from 'auth-popup';
+
+try {
+  const result = await AuthPopup.open({
+    authUrl: authUrl.toString(),
+    redirectFallback: false, // Don't redirect, handle it ourselves
+  });
+  handleSuccess(result);
+} catch (error) {
+  if (error instanceof PopupBlockedError) {
+    // Show your own custom UI (modal, iframe, etc.)
+    showCustomAuthModal(error.authUrl);
+
+    // Listen for callback result via BroadcastChannel
+    const result = await AuthPopup.listen({ timeout: 60000 });
+    handleSuccess(result);
+  }
+}
+```
+
+> **Note:** When using iframe, only BroadcastChannel works (`window.opener` is `null` in iframes). This requires same-origin callbacks.
+
+### PopupBlockedError
+
+Thrown when the browser blocks the popup. Contains useful properties for recovery:
+
+| Property      | Type      | Description                                |
+| ------------- | --------- | ------------------------------------------ |
+| `isBlocked`   | `boolean` | Always `true`                              |
+| `redirecting` | `boolean` | Whether the page is redirecting (fallback) |
+| `authUrl`     | `string`  | The original authorization URL             |
+
 ### handleCallback(options) / CallbackHandler.init(options)
 
 Processes the OAuth callback and sends the result to the parent window.
